@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyGO 営業 ドキュメントダッシュボード</title>
+<style>
+:root {
+  --bg:#0f172a;--surface:#1e293b;--surface2:#334155;--border:#475569;
+  --text:#f1f5f9;--text-sub:#94a3b8;--accent:#3b82f6;
+  --green:#22c55e;--yellow:#eab308;--orange:#f97316;--red:#ef4444;
+  --purple:#a855f7;--cyan:#06b6d4;--pink:#ec4899;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI','Hiragino Sans','Meiryo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6}
+.header{background:linear-gradient(135deg,#1e3a5f,#0f172a);border-bottom:1px solid var(--border);padding:28px 40px 0}
+.header h1{font-size:26px;font-weight:700}.header h1 span{color:var(--accent)}
+.header-meta{display:flex;gap:24px;margin-top:6px;color:var(--text-sub);font-size:13px}
+.main-tabs{display:flex;gap:0;margin-top:20px}
+.main-tab{padding:10px 28px;font-size:14px;font-weight:600;color:var(--text-sub);background:transparent;border:1px solid transparent;border-bottom:none;border-radius:8px 8px 0 0;cursor:pointer;transition:.2s}
+.main-tab:hover{color:var(--text)}.main-tab.active{background:var(--bg);color:var(--accent);border-color:var(--border)}
+.tab-count{display:inline-block;background:var(--surface2);color:var(--text-sub);font-size:11px;font-weight:600;padding:1px 7px;border-radius:8px;margin-left:6px}
+.main-tab.active .tab-count{background:rgba(59,130,246,.2);color:var(--accent)}
+.tab-content{display:none}.tab-content.active{display:block}
+.stats-bar{display:flex;gap:12px;padding:20px 40px;flex-wrap:wrap}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 20px;flex:1;min-width:110px;text-align:center}
+.stat-card .num{font-size:28px;font-weight:700;line-height:1.2}.stat-card .label{font-size:11px;color:var(--text-sub);margin-top:2px}
+.filter-bar{padding:0 40px 12px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.filter-btn{background:var(--surface);border:1px solid var(--border);color:var(--text-sub);padding:5px 14px;border-radius:20px;font-size:12px;cursor:pointer;transition:.2s}
+.filter-btn:hover,.filter-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.legend{padding:0 40px 14px;display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--text-sub)}
+.legend-item{display:flex;align-items:center;gap:5px}.legend-dot{width:9px;height:9px;border-radius:50%}
+.content{padding:0 40px 40px}
+.category{margin-bottom:28px}
+.category-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.category-icon{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.category-title{font-size:16px;font-weight:600}
+.category-count{background:var(--surface2);color:var(--text-sub);font-size:11px;padding:2px 8px;border-radius:10px}
+.features-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:14px}
+.feature-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;transition:.15s;position:relative;overflow:hidden}
+.feature-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.3)}
+.feature-card .accent-bar{position:absolute;top:0;left:0;width:4px;height:100%;border-radius:4px 0 0 4px}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px}
+.feature-name{font-size:15px;font-weight:600;line-height:1.4}
+.status-badge{font-size:10px;font-weight:600;padding:2px 9px;border-radius:10px;white-space:nowrap;flex-shrink:0}
+.status-complete{background:rgba(34,197,94,.15);color:var(--green)}
+.status-new{background:rgba(6,182,212,.15);color:var(--cyan)}
+.status-in-progress{background:rgba(234,179,8,.15);color:var(--yellow)}
+.status-design{background:rgba(236,72,153,.15);color:var(--pink)}
+.feature-desc{font-size:12px;color:var(--text-sub);margin-bottom:10px;line-height:1.5}
+.progress-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.progress-bar{flex:1;height:5px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px}
+.progress-text{font-size:11px;color:var(--text-sub);white-space:nowrap}
+.tag-row{display:flex;gap:5px;flex-wrap:wrap}
+.tag{font-size:10px;padding:2px 7px;border-radius:5px;background:var(--surface2);color:var(--text-sub)}
+.blocker{margin-top:8px;padding:7px 10px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:6px;font-size:11px;color:var(--red)}
+.blocker-label{font-weight:600;margin-right:4px}
+
+/* Doc tab */
+.search-box{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:6px 14px;border-radius:20px;font-size:13px;width:280px;outline:none}
+.search-box::placeholder{color:var(--text-sub)}.search-box:focus{border-color:var(--accent)}
+.doc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:10px}
+.doc-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start;transition:.12s;position:relative}
+.doc-card:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.25)}
+.doc-icon{width:36px;height:36px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px}
+.doc-info{flex:1;min-width:0}.doc-title{font-size:13px;font-weight:600;line-height:1.4;word-break:break-all}
+.doc-meta{font-size:11px;color:var(--text-sub);margin-top:3px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.doc-type-badge{font-size:10px;font-weight:600;padding:1px 7px;border-radius:8px;white-space:nowrap}
+.dtype-gas{background:rgba(249,115,22,.15);color:var(--orange)}
+.dtype-tool{background:rgba(6,182,212,.15);color:var(--cyan)}
+.dtype-guide{background:rgba(34,197,94,.15);color:var(--green)}
+.dtype-x{background:rgba(59,130,246,.15);color:var(--accent)}
+.dtype-plan{background:rgba(236,72,153,.15);color:var(--pink)}
+.dtype-sales{background:rgba(168,85,247,.15);color:var(--purple)}
+.dtype-data{background:rgba(234,179,8,.15);color:var(--yellow)}
+.dtype-script{background:rgba(6,182,212,.15);color:var(--cyan)}
+.dtype-other{background:var(--surface2);color:var(--text-sub)}
+.dtype-review{background:rgba(59,130,246,.15);color:var(--accent)}
+.doc-category-section{margin-bottom:24px}
+.doc-category-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+
+/* 必要/不要/保留 ボタン */
+.triage-btns{display:flex;gap:4px;margin-top:8px}
+.triage-btn{font-size:10px;padding:3px 10px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--text-sub);cursor:pointer;transition:.15s;font-weight:600}
+.triage-btn:hover{opacity:.8}
+.triage-btn.sel-need{background:rgba(34,197,94,.2);color:var(--green);border-color:var(--green)}
+.triage-btn.sel-skip{background:rgba(239,68,68,.15);color:var(--red);border-color:var(--red)}
+.triage-btn.sel-hold{background:rgba(234,179,8,.15);color:var(--yellow);border-color:var(--yellow)}
+.triage-btn.sel-done{background:rgba(6,182,212,.2);color:var(--cyan);border-color:var(--cyan)}
+
+/* 必要/不要/保留 フィルタタブ */
+.triage-tabs{display:flex;gap:0;margin:0 40px 16px;border-bottom:2px solid var(--border)}
+.triage-tab{padding:8px 24px;font-size:13px;font-weight:600;color:var(--text-sub);background:transparent;border:none;cursor:pointer;position:relative;transition:.2s}
+.triage-tab:hover{color:var(--text)}
+.triage-tab.active{color:var(--accent)}
+.triage-tab.active::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:2px;background:var(--accent);border-radius:1px}
+.triage-tab .tc{display:inline-block;background:var(--surface2);font-size:10px;padding:1px 6px;border-radius:8px;margin-left:5px}
+.triage-tab.active .tc{background:rgba(59,130,246,.2);color:var(--accent)}
+
+.doc-card.hidden-triage{display:none!important}
+
+@media(max-width:900px){
+  .features-grid,.doc-grid{grid-template-columns:1fr}
+  .header,.stats-bar,.filter-bar,.content,.legend,.triage-tabs{padding-left:16px;padding-right:16px}
+  .search-box{width:100%}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1><span>StudyGO</span> 営業 ドキュメントダッシュボード</h1>
+  <div class="header-meta">
+    <span>作成者: 國松</span>
+    <span>最終更新: 2026年04月02日 10:50</span>
+    <span>自動生成</span>
+  </div>
+  <div class="main-tabs">
+    <button class="main-tab active" onclick="switchTab('features')">ステータス管理<span class="tab-count">20</span></button>
+    <button class="main-tab" onclick="switchTab('docs')">ドキュメント一覧<span class="tab-count">86</span></button>
+  </div>
+</div>
+
+<!-- ===== TAB 1: ステータス管理 ===== -->
+<div id="tab-features" class="tab-content active">
+<div class="stats-bar">
+  <div class="stat-card"><div class="num" style="color:var(--green)">14</div><div class="label">完了・運用中</div></div>
+  <div class="stat-card"><div class="num" style="color:var(--cyan)">3</div><div class="label">新規作成</div></div>
+  <div class="stat-card"><div class="num" style="color:var(--yellow)">1</div><div class="label">進行中</div></div>
+  <div class="stat-card"><div class="num" style="color:var(--pink)">2</div><div class="label">設計・企画完了</div></div>
+</div>
+<div class="triage-tabs" id="feat-triage-tabs">
+  <button class="triage-tab active" onclick="filterFeatTriage('all')">すべて<span class="tc" id="ftc-all">0</span></button>
+  <button class="triage-tab" onclick="filterFeatTriage('need')">必要<span class="tc" id="ftc-need">0</span></button>
+  <button class="triage-tab" onclick="filterFeatTriage('hold')">保留<span class="tc" id="ftc-hold">0</span></button>
+  <button class="triage-tab" onclick="filterFeatTriage('skip')">不要<span class="tc" id="ftc-skip">0</span></button>
+  <button class="triage-tab" onclick="filterFeatTriage('done')">実施済み<span class="tc" id="ftc-done">0</span></button>
+  <button class="triage-tab" onclick="filterFeatTriage('unset')">未分類<span class="tc" id="ftc-unset">0</span></button>
+</div>
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>完了・運用中</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--cyan)"></div>新規作成</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div>進行中</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--pink)"></div>設計・企画完了</div>
+</div>
+<div class="filter-bar">
+  <button class="filter-btn active" onclick="filterFeatures('all')">すべて (20)</button>
+  <button class="filter-btn" onclick="filterFeatures('complete')">完了・運用中</button>
+  <button class="filter-btn" onclick="filterFeatures('new')">新規作成</button>
+  <button class="filter-btn" onclick="filterFeatures('in-progress')">進行中</button>
+  <button class="filter-btn" onclick="filterFeatures('design')">設計・企画完了</button>
+</div>
+<div class="content">
+<div class="category" data-category="complete">
+  <div class="category-header"><div class="category-icon" style="background:rgba(var(--green),0.15)">✅</div><div class="category-title">完了・運用中</div><span class="category-count">14件</span></div>
+  <div class="features-grid">
+    <div class="feature-card" data-status="complete" data-feat-id="feat_e52d5f0530">
+      <div class="accent-bar" style="background:var(--green)"></div>
+      <div class="card-top"><div class="feature-name">Webマニュアル（勉強カフェ向け）</div><span class="status-badge status-complete">公開済み</span></div>
+      <div class="feature-desc">勉強カフェスタッフ向けスタディGO操作マニュアル。GitHub Pagesで公開中。</div>
+      <div class="tag-row"><span class="tag">HTML/CSS</span><span class="tag">GitHub Pages</span><span class="tag">3ファイル構成</span></div>
+      <div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setFeatTriage('feat_e52d5f0530','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setFeatTriage('feat_e52d5f0530','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setFeatTriage('feat_e52d5f0530','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setFeatTriage('feat_e52d5f0530','done',this)">実施済み</button></div>
+    </div>
+    <div class="feature-card" data-status="complete" data-feat-id="feat_65b7e217df">
+      <div class="accent-bar" style="background:var(--green)"></div>
+      <div class="card-top"><div class="feature-name">メール一括送信システム</div><span class="status-badge status-complete">運用中</span></div>
+      <div class="feature-desc">クレカ未登録ユーザーにアマギフキャンペーンメールを送信。GAS 947行。</div>
+      <div class="tag-row"><span class="tag">GAS</span><span class="tag">Gmail API</span><span class="tag">スプレッドシート</span></div>
+      <div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setFeatTriage('feat_65b7e217df','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setFeatTriage('feat_65b7e217df','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setFeatTriage('feat_65b7e217df','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setFeatTriage('feat_65b7e217df','done',this)">実施済み</button></div>
+    </div>
+    <div class="feature-card" data-status="complete" data-feat-id="feat_1a8f31030c">
+      <div class="accent-bar" style="background:var(--green)"></div>
+      <div class="card-top"><div class="feature-name">X Bot 自動投稿システム</div><span class="status-badge status-complete">運用中</span></div>
+      <div class="feature-desc">X(Twitter)自動投稿（7:00/12:00/18:00/20:00の4件/日）。OAuth 1.0a、月間上限1,400件。</div>
+      <div class="tag-row"><span class="tag">GAS</span><span class="tag">X API</span><span class="tag">OAuth 1.0a</span><span class="tag">4件/日</span></div>
+      <div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setFeatTriage('feat_1a8f31030c','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setFeatTriage('feat_1a8f31030c','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setFeatTriage('feat_1a8f31030c','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setFeatTriage('feat_1a8f31030c','done',this)">実施済み</button></div>
+    </div>
+    <div class="feature-card" data-status="complete" data-feat-id="feat_23c2945016">
+      <div class="accent-bar" style="background:var(--green)"></div>
+      <div class="card-top"><div class="feature-name">営業管理WEBシステム</div><span class="status-badge status-complete">デプロイ済み</span></div>
+      <div class="feature-desc">営業活動の記録・追客アラート・データ検証。3ファイル構成（設定207行/バックエンド3,386行/フロントエンド2,654行）。</div>
+      <div class="progress-row"><div class="progress-bar"><div class="progress-fill" style="width:100%;background:var(--green)"></div></div><span class="progress-text">8/8 フェーズ完了</span></div>
+      <div class="tag-row"><span class="tag">GAS</span><span class="tag">Webアプリ</span><span class="tag">3ファイル</span><span class="tag">8フェーズ改善完了</span></div>
+      <div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setFeatTriage('feat_23c2945016','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setFeatTriage('feat_23c2945016','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setFeatTriage('feat_23c2945016','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setFeatTriage('feat_23c2945016','done',this)">実施済み</button></div>
+    </div>
+    <div class="feature-card" data-status="complete" data-feat-id="feat_2dbef0d5ed">
+      <div class="accent-bar" style="background:var(--green)"></div>
+      <div class="card-top"><div class="feature-name">備品在庫管理システム</div><span class="status-badge status-complete">運用中</span></div>
+      <div class="feature-desc">2スタジオの備品在庫数をWebアプリで送信→発注管理シートに自動反映。</div>
+      <div class="tag-row"><span class="tag">GAS</span><span class="tag">Webアプリ</span><span class="tag">BP/新宿</span></div>
+      <div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setFeatTriage('feat_2dbef0d5ed','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setFeatTriage('feat_2dbef0d5ed','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setFeatTriage('feat_2dbef0d5ed','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setFeatTriage('feat_2dbef0d5ed','done',this)">実施済み</button></div>
+    </div>
+    <div class="feature-card" data-status="complete" data-feat-id="feat_902f6e0bc9">
+      <div class="accent-bar" style="background:var(--green)"></div>
+      <div class="card-top"><div class="feature-name">ロッカー管理システム</div><span class="status-badge status-complete">完成</span></div>
+      <div class="feature-desc">2スタジオのロッカー空き状況を閲覧・管理。GAS Webアプリ＋スタンドアロンHTML。</div>
+      <div class="tag-row"><span class="tag">GAS</span><span class="tag">JSONP API</span><span class="tag">タブレット最適化</span></div>
+      <div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setFeatTriage('feat_902f6e0bc9','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setFeatTriage('feat_902f6e0bc9','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setFeatTriage('feat_902f6e0bc9','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setFeatTriage('feat_902f6e0bc9','done',this)">実施済み</button></div>
+    </div>
+    <div class="feature-card" data-status="complete" data-feat-id="feat_736756535b">
+      <div class="accent-bar" style="background:var(--green)"></div>
+      <div class="card-top"><div class="feature-name">契約通知メール転送＋会員番号通知</div><span class="status-badge status-complete">運用中</span></div>
+      <div class="feature-desc">契約通知メール受信→会員番号をお客様＋スタジオに自動送信。5分おきトリガー。</div>
+      <div class="tag-row"><span class="tag">GAS</span><span class="tag">Gmail API</span><span class="tag">HTMLメール</span></div>
+      <div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setFeatTriage('feat_736756535b','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setFeatTriage('feat_736756535b','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setFeatTriage('feat_736756535b','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setFeatTriage('feat_736756535b','done',this)">実施済み</button></div>
+    </div>
+    <div class="feature-card" data-status="complete" data-feat-id="feat_36ea3a60f7">
+      <div class="accent-bar" style="background:var(--green)"></div>
+      <div class="card-top"><div class="feature-name">席配置プランナー</div><span class="status-badge status-complete">完成</span></div>
+      <div class="feature-desc">新宿BPスタジオの席レイアウトをドラッグ&ドロップで設計。Canvas 2D。</div>
+      <div class="tag-row"><span class="tag">HTML/Canvas</span><span class="tag">localStorage</span><span class="tag">ラウンジ2部屋</span></div>
+      <div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setFeatTriage('feat_36ea3a60f7','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setFeatTriage('feat_36ea3a60f7','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setFeatTriage('feat_36ea3a60f7','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setFeatTriage('feat_36ea3a60f7','done',this)">実施済み</button></div>
+    </div>
+    <div class="feature-card" data-status="complete" data-feat-id="feat_f0f80b72b7">
+      <div class="accent-bar" style="background:var(--green)"></div>
+      <div class="card-top"><div class="feature-name">手続きフロー一覧</div><span class="status-badge status-complete">公開済み</span></div>
+      <div class="feature-desc">スタッフ向け5タブ構成の印刷可能A4フロー。GitHub Pagesで公開。</div>
+      <div class="tag-row"><span class="tag">HTML</span><span class="tag">PDF生成</span><span class="tag">5タブ</span><span class="tag">GitHub Pages</span></div>
+      <div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setFeatTriage('feat_f0f80b72b7','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setFeatTriage('feat_f0f80b72b7','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setFeatTriage('feat_f0f80b72b7','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setFeatTriage('feat_f0f80b72b7','done',this)">実施済み</button></div>
+    </div>
+    <div class="feature-card" data-status="complete" data-feat-id="feat_43bab755ff">
+      <div class="accent-bar" style="background:var(--green)"></div>
+      <div class="card-top"><div class="feature-name">クイズ管理システム</div><span class="status-badge status-complete">完成</span></div>
+      <div class="feature-desc">スタディGO関連のクイズ管理。100問対応。</div>
+      <div class="tag-row"><span class="tag">GAS</span><span class="tag">JavaScript</span></div>
+      <div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setFeatTriage('feat_43bab755ff','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setFeatTriage('feat_43bab755ff','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setFeatTriage('feat_43bab755ff','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setFeatTriage('feat_43bab755ff','done',this)">実施済み</button></div>
+    </div>
+    <div class="feature-card" data-status="complete" data-feat-id="feat_a378ef74ad">
+      <div class="accent-bar" style="background:var(--green)"></div>
+      <div class="card-top"><div class="feature-name">お知らせ管理システム</div><span class="status-badge status-complete">完成</span></div>
+      <div class="feature-desc">アプリ内お知らせの管理・配信。</div>
+      <div class="tag-row"><span class="tag">GAS</span></div>
+      <div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setFeatTriage('feat_a378ef74ad','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setFeatTriage('feat_a378ef74ad','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setFeatTriage('feat_a378ef74ad','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setFeatTriage('feat_a378ef74ad','done',this)">実施済み</button></div>
+    </div>
+    <div class="feature-card" data-status="complete" data-feat-id="feat_26cdc041ea">
+      <div class="accent-bar" style="background:var(--green)"></div>
+      <div class="card-top"><div class="feature-name">X投稿コンテンツ（全シリーズ）</div><span class="status-badge status-complete">作成済み</span></div>
+      <div class="feature-desc">店舗紹介313件、企画67件、坂道曲3,294件 他、多数のシリーズコンテンツ。</div>
+      <div class="tag-row"><span class="tag">テキスト</span><span class="tag">13シリーズ</span><span class="tag">計5,000件超</span></div>
+      <div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setFeatTriage('feat_26cdc041ea','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setFeatTriage('feat_26cdc041ea','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setFeatTriage('feat_26cdc041ea','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setFeatTriage('feat_26cdc041ea','done',this)">実施済み</button></div>
+    </div>
+    <div class="feature-card" data-status="complete" data-feat-id="feat_555c68f0f4">
+      <div class="accent-bar" style="background:var(--green)"></div>
+      <div class="card-top"><div class="feature-name">加盟法人自動登録</div><span class="status-badge status-complete">完成</span></div>
+      <div class="feature-desc">加盟法人の自動登録処理。</div>
+      <div class="tag-row"><span class="tag">GAS</span></div>
+      <div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setFeatTriage('feat_555c68f0f4','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setFeatTriage('feat_555c68f0f4','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setFeatTriage('feat_555c68f0f4','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setFeatTriage('feat_555c68f0f4','done',this)">実施済み</button></div>
+    </div>
+    <div class="feature-card" data-status="complete" data-feat-id="feat_09382914f9">
+      <div class="accent-bar" style="background:var(--green)"></div>
+      <div class="card-top"><div class="feature-name">Lステップ自動応答</div><span class="status-badge status-complete">完成</span></div>
+      <div class="feature-desc">LINE Lステップの自動応答シナリオ生成。</div>
+      <div class="tag-row"><span class="tag">Python</span><span class="tag">Excel出力</span></div>
+      <div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setFeatTriage('feat_09382914f9','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setFeatTriage('feat_09382914f9','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setFeatTriage('feat_09382914f9','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setFeatTriage('feat_09382914f9','done',this)">実施済み</button></div>
+    </div>
+  </div>
+</div>
+<div class="category" data-category="new">
+  <div class="category-header"><div class="category-icon" style="background:rgba(var(--cyan),0.15)">🆕</div><div class="category-title">新規作成</div><span class="category-count">3件</span></div>
+  <div class="features-grid">
+    <div class="feature-card" data-status="new" data-feat-id="feat_2ef93390e5">
+      <div class="accent-bar" style="background:var(--cyan)"></div>
+      <div class="card-top"><div class="feature-name">周知管理システム</div><span class="status-badge status-new">新規作成</span></div>
+      <div class="feature-desc">スタッフへの周知事項の管理・配信システム。</div>
+      <div class="tag-row"><span class="tag">GAS</span><span class="tag">2026-04-01</span></div>
+      <div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setFeatTriage('feat_2ef93390e5','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setFeatTriage('feat_2ef93390e5','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setFeatTriage('feat_2ef93390e5','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setFeatTriage('feat_2ef93390e5','done',this)">実施済み</button></div>
+    </div>
+    <div class="feature-card" data-status="new" data-feat-id="feat_74a246a309">
+      <div class="accent-bar" style="background:var(--cyan)"></div>
+      <div class="card-top"><div class="feature-name">Instagram投稿ツール</div><span class="status-badge status-new">新規作成</span></div>
+      <div class="feature-desc">Instagram投稿のための画像・テキスト管理ツール。</div>
+      <div class="tag-row"><span class="tag">HTML</span><span class="tag">2026-04-01</span></div>
+      <div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setFeatTriage('feat_74a246a309','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setFeatTriage('feat_74a246a309','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setFeatTriage('feat_74a246a309','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setFeatTriage('feat_74a246a309','done',this)">実施済み</button></div>
+    </div>
+    <div class="feature-card" data-status="new" data-feat-id="feat_d9586240b7">
+      <div class="accent-bar" style="background:var(--cyan)"></div>
+      <div class="card-top"><div class="feature-name">身分証写真アップロード/抽出</div><span class="status-badge status-new">新規作成</span></div>
+      <div class="feature-desc">身分証写真のアップロード(GAS)と抽出(HTML)ツール。</div>
+      <div class="tag-row"><span class="tag">GAS</span><span class="tag">HTML</span><span class="tag">2026-04-01</span></div>
+      <div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setFeatTriage('feat_d9586240b7','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setFeatTriage('feat_d9586240b7','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setFeatTriage('feat_d9586240b7','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setFeatTriage('feat_d9586240b7','done',this)">実施済み</button></div>
+    </div>
+  </div>
+</div>
+<div class="category" data-category="in-progress">
+  <div class="category-header"><div class="category-icon" style="background:rgba(var(--yellow),0.15)">🔄</div><div class="category-title">進行中</div><span class="category-count">1件</span></div>
+  <div class="features-grid">
+    <div class="feature-card" data-status="in-progress" data-feat-id="feat_d2c7759952">
+      <div class="accent-bar" style="background:var(--yellow)"></div>
+      <div class="card-top"><div class="feature-name">マーケティング戦略分析</div><span class="status-badge status-in-progress">進行中</span></div>
+      <div class="feature-desc">市場データ/競合25+社/ユーザー傾向/学術エビデンス/PEST・3C・SWOT・STP分析完了。ペルソナ詳細・KPI設計等は未着手。</div>
+      <div class="progress-row"><div class="progress-bar"><div class="progress-fill" style="width:70%;background:var(--yellow)"></div></div><span class="progress-text">主要分析完了・詳細未着手</span></div>
+      <div class="tag-row"><span class="tag">HTML</span><span class="tag">競合分析</span><span class="tag">フレームワーク分析</span></div>
+      <div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setFeatTriage('feat_d2c7759952','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setFeatTriage('feat_d2c7759952','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setFeatTriage('feat_d2c7759952','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setFeatTriage('feat_d2c7759952','done',this)">実施済み</button></div>
+    </div>
+  </div>
+</div>
+<div class="category" data-category="design">
+  <div class="category-header"><div class="category-icon" style="background:rgba(var(--pink),0.15)">📐</div><div class="category-title">設計・企画完了</div><span class="category-count">2件</span></div>
+  <div class="features-grid">
+    <div class="feature-card" data-status="design" data-feat-id="feat_11b5616b87">
+      <div class="accent-bar" style="background:var(--pink)"></div>
+      <div class="card-top"><div class="feature-name">スタディGO 店舗検索サイト</div><span class="status-badge status-design">モック完成</span></div>
+      <div class="feature-desc">店舗検索サイトのモックアップ3パターン作成済み。</div>
+      <div class="tag-row"><span class="tag">HTML</span><span class="tag">モック</span><span class="tag">3パターン</span></div>
+      <div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setFeatTriage('feat_11b5616b87','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setFeatTriage('feat_11b5616b87','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setFeatTriage('feat_11b5616b87','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setFeatTriage('feat_11b5616b87','done',this)">実施済み</button></div>
+    </div>
+    <div class="feature-card" data-status="design" data-feat-id="feat_1f4fa4e42f">
+      <div class="accent-bar" style="background:var(--pink)"></div>
+      <div class="card-top"><div class="feature-name">会員識別システム提案書</div><span class="status-badge status-design">提案書完成</span></div>
+      <div class="feature-desc">会員識別システムの提案書を作成済み。</div>
+      <div class="tag-row"><span class="tag">HTML</span><span class="tag">提案書</span></div>
+      <div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setFeatTriage('feat_1f4fa4e42f','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setFeatTriage('feat_1f4fa4e42f','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setFeatTriage('feat_1f4fa4e42f','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setFeatTriage('feat_1f4fa4e42f','done',this)">実施済み</button></div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+<div id="tab-docs" class="tab-content">
+<div class="stats-bar">
+  <div class="stat-card"><div class="num" style="color:var(--orange)">16</div><div class="label">GASシステム</div></div>
+  <div class="stat-card"><div class="num" style="color:var(--cyan)">12</div><div class="label">HTMLツール</div></div>
+  <div class="stat-card"><div class="num" style="color:var(--green)">11</div><div class="label">ガイド・マニュアル</div></div>
+  <div class="stat-card"><div class="num" style="color:var(--accent)">18</div><div class="label">X投稿コンテンツ</div></div>
+  <div class="stat-card"><div class="num" style="color:var(--pink)">1</div><div class="label">企画書・提案書</div></div>
+  <div class="stat-card"><div class="num" style="color:var(--purple)">7</div><div class="label">営業リスト</div></div>
+  <div class="stat-card"><div class="num" style="color:var(--yellow)">9</div><div class="label">データ・分析</div></div>
+  <div class="stat-card"><div class="num" style="color:var(--cyan)">12</div><div class="label">スクリプト</div></div>
+  <div class="stat-card"><div class="num" style="color:var(--text-sub)">0</div><div class="label">その他</div></div>
+</div>
+<div class="triage-tabs">
+  <button class="triage-tab active" onclick="filterTriage('all')">すべて<span class="tc" id="tc-all">0</span></button>
+  <button class="triage-tab" onclick="filterTriage('need')">必要<span class="tc" id="tc-need">0</span></button>
+  <button class="triage-tab" onclick="filterTriage('hold')">保留<span class="tc" id="tc-hold">0</span></button>
+  <button class="triage-tab" onclick="filterTriage('skip')">不要<span class="tc" id="tc-skip">0</span></button>
+  <button class="triage-tab" onclick="filterTriage('done')">実施済み<span class="tc" id="tc-done">0</span></button>
+  <button class="triage-tab" onclick="filterTriage('unset')">未分類<span class="tc" id="tc-unset">0</span></button>
+</div>
+<div class="filter-bar">
+  <input type="text" class="search-box" id="docSearch" placeholder="ドキュメント名で検索..." oninput="applyDocFilters()">
+  <button class="filter-btn active" data-doc-filter="all" onclick="filterDocType('all')">すべて</button>
+  <button class="filter-btn" data-doc-filter="gas" onclick="filterDocType('gas')">GASシステム</button>
+  <button class="filter-btn" data-doc-filter="tool" onclick="filterDocType('tool')">HTMLツール</button>
+  <button class="filter-btn" data-doc-filter="guide" onclick="filterDocType('guide')">ガイド・マニュアル</button>
+  <button class="filter-btn" data-doc-filter="x-content" onclick="filterDocType('x-content')">X投稿コンテンツ</button>
+  <button class="filter-btn" data-doc-filter="plan" onclick="filterDocType('plan')">企画書・提案書</button>
+  <button class="filter-btn" data-doc-filter="sales" onclick="filterDocType('sales')">営業リスト</button>
+  <button class="filter-btn" data-doc-filter="data" onclick="filterDocType('data')">データ・分析</button>
+  <button class="filter-btn" data-doc-filter="script" onclick="filterDocType('script')">スクリプト</button>
+  <button class="filter-btn" data-doc-filter="other" onclick="filterDocType('other')">その他</button>
+</div>
+<div class="content" id="doc-content">
+<div class="doc-category-section" data-doc-cat="gas">
+  <div class="doc-category-header"><div class="category-icon">⚙</div><div class="category-title">GASシステム</div><span class="category-count">16件</span></div>
+  <div class="doc-grid">
+    <div class="doc-card" data-dtype="gas" data-doc-id="21c3c03992e8"><div class="doc-icon">⚙</div><div class="doc-info"><div class="doc-title">StudyGO_XBot</div><div class="doc-meta"><span class="doc-type-badge dtype-gas">X Bot</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('21c3c03992e8','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('21c3c03992e8','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('21c3c03992e8','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('21c3c03992e8','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="gas" data-doc-id="e72fa214b58e"><div class="doc-icon">⚙</div><div class="doc-info"><div class="doc-title">X投稿_手動管理</div><div class="doc-meta"><span class="doc-type-badge dtype-gas">X Bot</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('e72fa214b58e','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('e72fa214b58e','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('e72fa214b58e','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('e72fa214b58e','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="gas" data-doc-id="07cffc1a534c"><div class="doc-icon">⚙</div><div class="doc-info"><div class="doc-title">お知らせ管理システム</div><div class="doc-meta"><span class="doc-type-badge dtype-gas">お知らせ</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('07cffc1a534c','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('07cffc1a534c','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('07cffc1a534c','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('07cffc1a534c','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="gas" data-doc-id="c3a829961ee8"><div class="doc-icon">⚙</div><div class="doc-info"><div class="doc-title">クイズ管理システム</div><div class="doc-meta"><span class="doc-type-badge dtype-gas">クイズ</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('c3a829961ee8','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('c3a829961ee8','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('c3a829961ee8','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('c3a829961ee8','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="gas" data-doc-id="e9b333adb5c3"><div class="doc-icon">⚙</div><div class="doc-info"><div class="doc-title">メール一括送信システム</div><div class="doc-meta"><span class="doc-type-badge dtype-gas">メール系</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('e9b333adb5c3','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('e9b333adb5c3','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('e9b333adb5c3','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('e9b333adb5c3','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="gas" data-doc-id="0bbca1aeefbc"><div class="doc-icon">⚙</div><div class="doc-info"><div class="doc-title">ロッカー空き確認表</div><div class="doc-meta"><span class="doc-type-badge dtype-gas">ロッカー管理</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('0bbca1aeefbc','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('0bbca1aeefbc','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('0bbca1aeefbc','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('0bbca1aeefbc','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="gas" data-doc-id="9aab9731c54a"><div class="doc-icon">⚙</div><div class="doc-info"><div class="doc-title">加盟法人自動登録</div><div class="doc-meta"><span class="doc-type-badge dtype-gas">法人管理</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('9aab9731c54a','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('9aab9731c54a','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('9aab9731c54a','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('9aab9731c54a','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="gas" data-doc-id="20ac9ca695f9"><div class="doc-icon">⚙</div><div class="doc-info"><div class="doc-title">周知管理システム</div><div class="doc-meta"><span class="doc-type-badge dtype-gas">お知らせ</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('20ac9ca695f9','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('20ac9ca695f9','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('20ac9ca695f9','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('20ac9ca695f9','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="gas" data-doc-id="96883c2aafb5"><div class="doc-icon">⚙</div><div class="doc-info"><div class="doc-title">営業管理_バックエンド</div><div class="doc-meta"><span class="doc-type-badge dtype-gas">営業管理</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('96883c2aafb5','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('96883c2aafb5','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('96883c2aafb5','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('96883c2aafb5','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="gas" data-doc-id="a1a8a9a5a746"><div class="doc-icon">⚙</div><div class="doc-info"><div class="doc-title">営業管理_フロントエンド</div><div class="doc-meta"><span class="doc-type-badge dtype-gas">営業管理</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('a1a8a9a5a746','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('a1a8a9a5a746','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('a1a8a9a5a746','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('a1a8a9a5a746','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="gas" data-doc-id="e3416b68c7d2"><div class="doc-icon">⚙</div><div class="doc-info"><div class="doc-title">営業管理_メイン</div><div class="doc-meta"><span class="doc-type-badge dtype-gas">営業管理</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('e3416b68c7d2','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('e3416b68c7d2','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('e3416b68c7d2','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('e3416b68c7d2','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="gas" data-doc-id="0b7c16f1e4fc"><div class="doc-icon">⚙</div><div class="doc-info"><div class="doc-title">営業管理_設定</div><div class="doc-meta"><span class="doc-type-badge dtype-gas">営業管理</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('0b7c16f1e4fc','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('0b7c16f1e4fc','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('0b7c16f1e4fc','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('0b7c16f1e4fc','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="gas" data-doc-id="7af0f3e3d9a7"><div class="doc-icon">⚙</div><div class="doc-info"><div class="doc-title">営業管理システム</div><div class="doc-meta"><span class="doc-type-badge dtype-gas">営業管理</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('7af0f3e3d9a7','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('7af0f3e3d9a7','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('7af0f3e3d9a7','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('7af0f3e3d9a7','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="gas" data-doc-id="12657ff09656"><div class="doc-icon">⚙</div><div class="doc-info"><div class="doc-title">契約通知メール転送</div><div class="doc-meta"><span class="doc-type-badge dtype-gas">メール系</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('12657ff09656','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('12657ff09656','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('12657ff09656','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('12657ff09656','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="gas" data-doc-id="5ab7adbe96ca"><div class="doc-icon">⚙</div><div class="doc-info"><div class="doc-title">月額自動入力</div><div class="doc-meta"><span class="doc-type-badge dtype-gas">月額管理</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('5ab7adbe96ca','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('5ab7adbe96ca','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('5ab7adbe96ca','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('5ab7adbe96ca','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="gas" data-doc-id="d1ff4e0101bb"><div class="doc-icon">⚙</div><div class="doc-info"><div class="doc-title">身分証写真アップロード</div><div class="doc-meta"><span class="doc-type-badge dtype-gas">身分証</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('d1ff4e0101bb','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('d1ff4e0101bb','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('d1ff4e0101bb','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('d1ff4e0101bb','done',this)">実施済み</button></div></div></div>
+  </div>
+</div>
+<div class="doc-category-section" data-doc-cat="tool">
+  <div class="doc-category-header"><div class="category-icon">🛠</div><div class="category-title">HTMLツール</div><span class="category-count">12件</span></div>
+  <div class="doc-grid">
+    <div class="doc-card" data-dtype="tool" data-doc-id="b47cd299bfb0"><div class="doc-icon">📷</div><div class="doc-info"><div class="doc-title">Instagram投稿ツール</div><div class="doc-meta"><span class="doc-type-badge dtype-tool">Instagram</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('b47cd299bfb0','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('b47cd299bfb0','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('b47cd299bfb0','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('b47cd299bfb0','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="tool" data-doc-id="eacf331f0ffc"><div class="doc-icon">🌐</div><div class="doc-info"><div class="doc-title">index</div><div class="doc-meta"><span class="doc-type-badge dtype-tool">HTMLツール</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('eacf331f0ffc','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('eacf331f0ffc','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('eacf331f0ffc','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('eacf331f0ffc','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="tool" data-doc-id="d241845001c3"><div class="doc-icon">🗺</div><div class="doc-info"><div class="doc-title">スタジオマップ</div><div class="doc-meta"><span class="doc-type-badge dtype-tool">レイアウトツール</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('d241845001c3','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('d241845001c3','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('d241845001c3','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('d241845001c3','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="tool" data-doc-id="6678dba77937"><div class="doc-icon">🔍</div><div class="doc-info"><div class="doc-title">スタディGO_店舗検索サイト</div><div class="doc-meta"><span class="doc-type-badge dtype-tool">店舗検索サイト</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('6678dba77937','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('6678dba77937','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('6678dba77937','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('6678dba77937','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="tool" data-doc-id="5505b8f8a8b7"><div class="doc-icon">🔍</div><div class="doc-info"><div class="doc-title">スタディGO_店舗検索サイト_PatternA</div><div class="doc-meta"><span class="doc-type-badge dtype-tool">店舗検索サイト</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('5505b8f8a8b7','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('5505b8f8a8b7','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('5505b8f8a8b7','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('5505b8f8a8b7','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="tool" data-doc-id="07d7c3d79082"><div class="doc-icon">🔍</div><div class="doc-info"><div class="doc-title">スタディGO_店舗検索サイト_PatternB</div><div class="doc-meta"><span class="doc-type-badge dtype-tool">店舗検索サイト</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('07d7c3d79082','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('07d7c3d79082','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('07d7c3d79082','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('07d7c3d79082','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="tool" data-doc-id="9c5a08c83d2d"><div class="doc-icon">✉</div><div class="doc-info"><div class="doc-title">メールテンプレート編集</div><div class="doc-meta"><span class="doc-type-badge dtype-tool">メールツール</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('9c5a08c83d2d','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('9c5a08c83d2d','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('9c5a08c83d2d','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('9c5a08c83d2d','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="tool" data-doc-id="93da30976a59"><div class="doc-icon">🔐</div><div class="doc-info"><div class="doc-title">ロッカー契約解約の流れ</div><div class="doc-meta"><span class="doc-type-badge dtype-tool">ロッカー管理</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('93da30976a59','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('93da30976a59','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('93da30976a59','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('93da30976a59','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="tool" data-doc-id="8b22f3471b48"><div class="doc-icon">🔐</div><div class="doc-info"><div class="doc-title">ロッカー管理表</div><div class="doc-meta"><span class="doc-type-badge dtype-tool">ロッカー管理</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('8b22f3471b48','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('8b22f3471b48','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('8b22f3471b48','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('8b22f3471b48','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="tool" data-doc-id="7ace77a683df"><div class="doc-icon">📋</div><div class="doc-info"><div class="doc-title">手続きフロー一覧</div><div class="doc-meta"><span class="doc-type-badge dtype-tool">手続きフロー</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('7ace77a683df','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('7ace77a683df','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('7ace77a683df','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('7ace77a683df','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="tool" data-doc-id="9989f7c01091"><div class="doc-icon">📋</div><div class="doc-info"><div class="doc-title">手続きフロー一覧</div><div class="doc-meta"><span class="doc-type-badge dtype-tool">手続きフロー</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('9989f7c01091','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('9989f7c01091','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('9989f7c01091','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('9989f7c01091','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="tool" data-doc-id="c79753716ed4"><div class="doc-icon">🪪</div><div class="doc-info"><div class="doc-title">身分証写真抽出</div><div class="doc-meta"><span class="doc-type-badge dtype-tool">身分証ツール</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('c79753716ed4','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('c79753716ed4','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('c79753716ed4','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('c79753716ed4','done',this)">実施済み</button></div></div></div>
+  </div>
+</div>
+<div class="doc-category-section" data-doc-cat="guide">
+  <div class="doc-category-header"><div class="category-icon">📗</div><div class="category-title">ガイド・マニュアル</div><span class="category-count">11件</span></div>
+  <div class="doc-grid">
+    <div class="doc-card" data-dtype="guide" data-doc-id="5a6f355ffa3f"><div class="doc-icon">📗</div><div class="doc-info"><div class="doc-title">StudyGO_XBot_API取得ガイド</div><div class="doc-meta"><span class="doc-type-badge dtype-guide">API取得ガイド</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('5a6f355ffa3f','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('5a6f355ffa3f','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('5a6f355ffa3f','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('5a6f355ffa3f','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="guide" data-doc-id="44263cf0f38f"><div class="doc-icon">📗</div><div class="doc-info"><div class="doc-title">StudyGO_XBot_セットアップガイド</div><div class="doc-meta"><span class="doc-type-badge dtype-guide">セットアップガイド</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('44263cf0f38f','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('44263cf0f38f','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('44263cf0f38f','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('44263cf0f38f','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="guide" data-doc-id="2e9b23771618"><div class="doc-icon">📗</div><div class="doc-info"><div class="doc-title">StudyGO_XBot_運用マニュアル</div><div class="doc-meta"><span class="doc-type-badge dtype-guide">運用マニュアル</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('2e9b23771618','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('2e9b23771618','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('2e9b23771618','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('2e9b23771618','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="guide" data-doc-id="6033a56dd49f"><div class="doc-icon">📗</div><div class="doc-info"><div class="doc-title">クイズ管理システム_セットアップガイド</div><div class="doc-meta"><span class="doc-type-badge dtype-guide">セットアップガイド</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('6033a56dd49f','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('6033a56dd49f','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('6033a56dd49f','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('6033a56dd49f','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="guide" data-doc-id="abd2138ecd9e"><div class="doc-icon">📗</div><div class="doc-info"><div class="doc-title">メール一括送信システム_セットアップガイド</div><div class="doc-meta"><span class="doc-type-badge dtype-guide">セットアップガイド</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('abd2138ecd9e','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('abd2138ecd9e','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('abd2138ecd9e','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('abd2138ecd9e','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="guide" data-doc-id="b5d90fb0c7fd"><div class="doc-icon">📗</div><div class="doc-info"><div class="doc-title">メール一括送信システム_運用マニュアル</div><div class="doc-meta"><span class="doc-type-badge dtype-guide">運用マニュアル</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('b5d90fb0c7fd','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('b5d90fb0c7fd','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('b5d90fb0c7fd','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('b5d90fb0c7fd','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="guide" data-doc-id="dbaf0bb3be2a"><div class="doc-icon">📗</div><div class="doc-info"><div class="doc-title">ロッカー空き確認表_セットアップガイド</div><div class="doc-meta"><span class="doc-type-badge dtype-guide">セットアップガイド</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('dbaf0bb3be2a','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('dbaf0bb3be2a','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('dbaf0bb3be2a','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('dbaf0bb3be2a','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="guide" data-doc-id="a0cf7d775da3"><div class="doc-icon">📗</div><div class="doc-info"><div class="doc-title">加盟法人自動登録_セットアップガイド</div><div class="doc-meta"><span class="doc-type-badge dtype-guide">セットアップガイド</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('a0cf7d775da3','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('a0cf7d775da3','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('a0cf7d775da3','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('a0cf7d775da3','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="guide" data-doc-id="59d96c27de66"><div class="doc-icon">📗</div><div class="doc-info"><div class="doc-title">周知管理システム_セットアップガイド</div><div class="doc-meta"><span class="doc-type-badge dtype-guide">セットアップガイド</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('59d96c27de66','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('59d96c27de66','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('59d96c27de66','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('59d96c27de66','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="guide" data-doc-id="288267c100e8"><div class="doc-icon">📗</div><div class="doc-info"><div class="doc-title">営業管理システム_セットアップガイド</div><div class="doc-meta"><span class="doc-type-badge dtype-guide">セットアップガイド</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('288267c100e8','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('288267c100e8','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('288267c100e8','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('288267c100e8','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="guide" data-doc-id="81da64f4fbc5"><div class="doc-icon">📗</div><div class="doc-info"><div class="doc-title">営業管理システム_運用マニュアル</div><div class="doc-meta"><span class="doc-type-badge dtype-guide">運用マニュアル</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('81da64f4fbc5','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('81da64f4fbc5','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('81da64f4fbc5','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('81da64f4fbc5','done',this)">実施済み</button></div></div></div>
+  </div>
+</div>
+<div class="doc-category-section" data-doc-cat="x-content">
+  <div class="doc-category-header"><div class="category-icon">🐦</div><div class="category-title">X投稿コンテンツ</div><span class="category-count">18件</span></div>
+  <div class="doc-grid">
+    <div class="doc-card" data-dtype="x-content" data-doc-id="4e18d57e75a3"><div class="doc-icon">🐦</div><div class="doc-info"><div class="doc-title">X投稿_あるある共感系</div><div class="doc-meta"><span class="doc-type-badge dtype-x">X投稿コンテンツ</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('4e18d57e75a3','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('4e18d57e75a3','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('4e18d57e75a3','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('4e18d57e75a3','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="x-content" data-doc-id="84cfe7e07ad6"><div class="doc-icon">🐦</div><div class="doc-info"><div class="doc-title">X投稿_アイドル曲</div><div class="doc-meta"><span class="doc-type-badge dtype-x">X投稿コンテンツ</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('84cfe7e07ad6','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('84cfe7e07ad6','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('84cfe7e07ad6','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('84cfe7e07ad6','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="x-content" data-doc-id="95759ee0d4d3"><div class="doc-icon">🐦</div><div class="doc-info"><div class="doc-title">X投稿_グッズコンビニ系</div><div class="doc-meta"><span class="doc-type-badge dtype-x">X投稿コンテンツ</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('95759ee0d4d3','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('95759ee0d4d3','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('95759ee0d4d3','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('95759ee0d4d3','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="x-content" data-doc-id="463470bbfb74"><div class="doc-icon">🐦</div><div class="doc-info"><div class="doc-title">X投稿_サブコンテンツ</div><div class="doc-meta"><span class="doc-type-badge dtype-x">X投稿コンテンツ</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('463470bbfb74','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('463470bbfb74','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('463470bbfb74','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('463470bbfb74','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="x-content" data-doc-id="c2019e638f95"><div class="doc-icon">🐦</div><div class="doc-info"><div class="doc-title">X投稿_企画シリーズ</div><div class="doc-meta"><span class="doc-type-badge dtype-x">企画シリーズ</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('c2019e638f95','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('c2019e638f95','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('c2019e638f95','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('c2019e638f95','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="x-content" data-doc-id="24661f2afe6e"><div class="doc-icon">🐦</div><div class="doc-info"><div class="doc-title">X投稿_体験レポート</div><div class="doc-meta"><span class="doc-type-badge dtype-x">X投稿コンテンツ</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('24661f2afe6e','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('24661f2afe6e','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('24661f2afe6e','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('24661f2afe6e','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="x-content" data-doc-id="7f0f4ace1147"><div class="doc-icon">🐦</div><div class="doc-info"><div class="doc-title">X投稿_勉強あるある</div><div class="doc-meta"><span class="doc-type-badge dtype-x">X投稿コンテンツ</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('7f0f4ace1147','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('7f0f4ace1147','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('7f0f4ace1147','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('7f0f4ace1147','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="x-content" data-doc-id="df3035870d35"><div class="doc-icon">🐦</div><div class="doc-info"><div class="doc-title">X投稿_勉強おすすめ曲</div><div class="doc-meta"><span class="doc-type-badge dtype-x">X投稿コンテンツ</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('df3035870d35','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('df3035870d35','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('df3035870d35','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('df3035870d35','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="x-content" data-doc-id="bcbc48a9cf5f"><div class="doc-icon">🐦</div><div class="doc-info"><div class="doc-title">X投稿_名言有名人おもしろ資格</div><div class="doc-meta"><span class="doc-type-badge dtype-x">X投稿コンテンツ</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('bcbc48a9cf5f','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('bcbc48a9cf5f','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('bcbc48a9cf5f','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('bcbc48a9cf5f','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="x-content" data-doc-id="a3ca1943ef93"><div class="doc-icon">🐦</div><div class="doc-info"><div class="doc-title">X投稿_店舗紹介</div><div class="doc-meta"><span class="doc-type-badge dtype-x">店舗紹介投稿</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('a3ca1943ef93','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('a3ca1943ef93','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('a3ca1943ef93','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('a3ca1943ef93','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="x-content" data-doc-id="9b036d378cb8"><div class="doc-icon">🐦</div><div class="doc-info"><div class="doc-title">X投稿_海外勉強トレンド</div><div class="doc-meta"><span class="doc-type-badge dtype-x">X投稿コンテンツ</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('9b036d378cb8','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('9b036d378cb8','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('9b036d378cb8','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('9b036d378cb8','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="x-content" data-doc-id="826c8e34859b"><div class="doc-icon">🐦</div><div class="doc-info"><div class="doc-title">X投稿_習慣ルーティン系</div><div class="doc-meta"><span class="doc-type-badge dtype-x">X投稿コンテンツ</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('826c8e34859b','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('826c8e34859b','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('826c8e34859b','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('826c8e34859b','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="x-content" data-doc-id="88051552c5cc"><div class="doc-icon">🐦</div><div class="doc-info"><div class="doc-title">X投稿_記事紹介テンプレート</div><div class="doc-meta"><span class="doc-type-badge dtype-x">X投稿コンテンツ</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('88051552c5cc','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('88051552c5cc','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('88051552c5cc','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('88051552c5cc','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="x-content" data-doc-id="b70c20f0da1e"><div class="doc-icon">🐦</div><div class="doc-info"><div class="doc-title">X投稿_試験日日報</div><div class="doc-meta"><span class="doc-type-badge dtype-x">X投稿コンテンツ</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('b70c20f0da1e','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('b70c20f0da1e','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('b70c20f0da1e','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('b70c20f0da1e','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="x-content" data-doc-id="8db8e299ad2b"><div class="doc-icon">🐦</div><div class="doc-info"><div class="doc-title">X投稿_雑学知識場所系</div><div class="doc-meta"><span class="doc-type-badge dtype-x">X投稿コンテンツ</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('8db8e299ad2b','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('8db8e299ad2b','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('8db8e299ad2b','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('8db8e299ad2b','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="x-content" data-doc-id="cb5b72da0b1b"><div class="doc-icon">🐦</div><div class="doc-info"><div class="doc-title">X投稿スケジュール_全シリーズ</div><div class="doc-meta"><span class="doc-type-badge dtype-x">X運用管理</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('cb5b72da0b1b','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('cb5b72da0b1b','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('cb5b72da0b1b','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('cb5b72da0b1b','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="x-content" data-doc-id="194fa3f28d92"><div class="doc-icon">🐦</div><div class="doc-info"><div class="doc-title">X運用_手動投稿スケジュール</div><div class="doc-meta"><span class="doc-type-badge dtype-x">X運用管理</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('194fa3f28d92','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('194fa3f28d92','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('194fa3f28d92','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('194fa3f28d92','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="x-content" data-doc-id="9416d2d03772"><div class="doc-icon">🐦</div><div class="doc-info"><div class="doc-title">X運用戦略</div><div class="doc-meta"><span class="doc-type-badge dtype-x">X運用管理</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('9416d2d03772','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('9416d2d03772','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('9416d2d03772','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('9416d2d03772','done',this)">実施済み</button></div></div></div>
+  </div>
+</div>
+<div class="doc-category-section" data-doc-cat="plan">
+  <div class="doc-category-header"><div class="category-icon">📝</div><div class="category-title">企画書・提案書</div><span class="category-count">1件</span></div>
+  <div class="doc-grid">
+    <div class="doc-card" data-dtype="plan" data-doc-id="1d3b30b06afb"><div class="doc-icon">📝</div><div class="doc-info"><div class="doc-title">会員識別システム提案書</div><div class="doc-meta"><span class="doc-type-badge dtype-plan">提案書</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('1d3b30b06afb','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('1d3b30b06afb','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('1d3b30b06afb','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('1d3b30b06afb','done',this)">実施済み</button></div></div></div>
+  </div>
+</div>
+<div class="doc-category-section" data-doc-cat="sales">
+  <div class="doc-category-header"><div class="category-icon">📞</div><div class="category-title">営業リスト</div><span class="category-count">7件</span></div>
+  <div class="doc-grid">
+    <div class="doc-card" data-dtype="sales" data-doc-id="bb0d9d8f2d87"><div class="doc-icon">📞</div><div class="doc-info"><div class="doc-title">有料自習室_営業リスト_1都3県</div><div class="doc-meta"><span class="doc-type-badge dtype-sales">営業リスト</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('bb0d9d8f2d87','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('bb0d9d8f2d87','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('bb0d9d8f2d87','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('bb0d9d8f2d87','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="sales" data-doc-id="d3c3ad6cd569"><div class="doc-icon">📞</div><div class="doc-info"><div class="doc-title">有料自習室_営業リスト_1都3県</div><div class="doc-meta"><span class="doc-type-badge dtype-sales">営業リスト</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('d3c3ad6cd569','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('d3c3ad6cd569','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('d3c3ad6cd569','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('d3c3ad6cd569','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="sales" data-doc-id="8d4062868ee0"><div class="doc-icon">📞</div><div class="doc-info"><div class="doc-title">架電リスト_1都3県_コワーキング自習室_統合版</div><div class="doc-meta"><span class="doc-type-badge dtype-sales">営業リスト</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('8d4062868ee0','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('8d4062868ee0','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('8d4062868ee0','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('8d4062868ee0','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="sales" data-doc-id="4bc0e90c7785"><div class="doc-icon">📞</div><div class="doc-info"><div class="doc-title">架電リスト_1都3県_独立系_コワーキング自習室</div><div class="doc-meta"><span class="doc-type-badge dtype-sales">営業リスト</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('4bc0e90c7785','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('4bc0e90c7785','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('4bc0e90c7785','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('4bc0e90c7785','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="sales" data-doc-id="a8a6b8276942"><div class="doc-icon">📞</div><div class="doc-info"><div class="doc-title">架電リスト_コワーキング自習室</div><div class="doc-meta"><span class="doc-type-badge dtype-sales">営業リスト</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('a8a6b8276942','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('a8a6b8276942','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('a8a6b8276942','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('a8a6b8276942','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="sales" data-doc-id="37064df7f282"><div class="doc-icon">📞</div><div class="doc-info"><div class="doc-title">架電リスト_東京_レンタルオフィス_コワーキング</div><div class="doc-meta"><span class="doc-type-badge dtype-sales">営業リスト</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('37064df7f282','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('37064df7f282','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('37064df7f282','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('37064df7f282','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="sales" data-doc-id="306fe4b9c756"><div class="doc-icon">📞</div><div class="doc-info"><div class="doc-title">架電リスト_関東_コワーキング自習室</div><div class="doc-meta"><span class="doc-type-badge dtype-sales">営業リスト</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('306fe4b9c756','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('306fe4b9c756','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('306fe4b9c756','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('306fe4b9c756','done',this)">実施済み</button></div></div></div>
+  </div>
+</div>
+<div class="doc-category-section" data-doc-cat="data">
+  <div class="doc-category-header"><div class="category-icon">📊</div><div class="category-title">データ・分析</div><span class="category-count">9件</span></div>
+  <div class="doc-grid">
+    <div class="doc-card" data-dtype="data" data-doc-id="bdee518623e0"><div class="doc-icon">📊</div><div class="doc-info"><div class="doc-title">Lステップ_自動応答_スタディGO版</div><div class="doc-meta"><span class="doc-type-badge dtype-data">データ</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('bdee518623e0','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('bdee518623e0','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('bdee518623e0','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('bdee518623e0','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="data" data-doc-id="61dcf3266818"><div class="doc-icon">📊</div><div class="doc-info"><div class="doc-title">list_export_20260316115919_1</div><div class="doc-meta"><span class="doc-type-badge dtype-data">データ</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('61dcf3266818','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('61dcf3266818','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('61dcf3266818','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('61dcf3266818','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="data" data-doc-id="42db5a1ac446"><div class="doc-icon">📊</div><div class="doc-info"><div class="doc-title">スタディGO_店舗向けマニュアル_QA</div><div class="doc-meta"><span class="doc-type-badge dtype-data">データ</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('42db5a1ac446','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('42db5a1ac446','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('42db5a1ac446','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('42db5a1ac446','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="data" data-doc-id="8699340b908e"><div class="doc-icon">📊</div><div class="doc-info"><div class="doc-title">スタディGO_店舗向けマニュアル_初期</div><div class="doc-meta"><span class="doc-type-badge dtype-data">データ</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('8699340b908e','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('8699340b908e','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('8699340b908e','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('8699340b908e','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="data" data-doc-id="a1a33f7ff5dc"><div class="doc-icon">📊</div><div class="doc-info"><div class="doc-title">マーケティング戦略分析</div><div class="doc-meta"><span class="doc-type-badge dtype-data">マーケティング分析</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('a1a33f7ff5dc','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('a1a33f7ff5dc','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('a1a33f7ff5dc','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('a1a33f7ff5dc','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="data" data-doc-id="f316e18d885a"><div class="doc-icon">📊</div><div class="doc-info"><div class="doc-title">マーケティング調査レポート</div><div class="doc-meta"><span class="doc-type-badge dtype-data">マーケティング分析</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('f316e18d885a','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('f316e18d885a','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('f316e18d885a','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('f316e18d885a','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="data" data-doc-id="f092e2baa1b1"><div class="doc-icon">📊</div><div class="doc-info"><div class="doc-title">備品マスタ一覧</div><div class="doc-meta"><span class="doc-type-badge dtype-data">備品データ</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('f092e2baa1b1','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('f092e2baa1b1','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('f092e2baa1b1','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('f092e2baa1b1','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="data" data-doc-id="27ae401ba463"><div class="doc-icon">📊</div><div class="doc-info"><div class="doc-title">備品マスタ一覧_スタジオ別</div><div class="doc-meta"><span class="doc-type-badge dtype-data">備品データ</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('27ae401ba463','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('27ae401ba463','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('27ae401ba463','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('27ae401ba463','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="data" data-doc-id="392862f07c72"><div class="doc-icon">📊</div><div class="doc-info"><div class="doc-title">入会チェックリスト_スタディGO</div><div class="doc-meta"><span class="doc-type-badge dtype-data">チェックリスト</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('392862f07c72','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('392862f07c72','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('392862f07c72','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('392862f07c72','done',this)">実施済み</button></div></div></div>
+  </div>
+</div>
+<div class="doc-category-section" data-doc-cat="script">
+  <div class="doc-category-header"><div class="category-icon">🐍</div><div class="category-title">スクリプト</div><span class="category-count">12件</span></div>
+  <div class="doc-grid">
+    <div class="doc-card" data-dtype="script" data-doc-id="fe9baec13886"><div class="doc-icon">🐍</div><div class="doc-info"><div class="doc-title">X投稿_コンテンツ変換</div><div class="doc-meta"><span class="doc-type-badge dtype-script">変換ツール</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('fe9baec13886','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('fe9baec13886','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('fe9baec13886','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('fe9baec13886','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="script" data-doc-id="028796a78715"><div class="doc-icon">🐍</div><div class="doc-info"><div class="doc-title">cleanup_data</div><div class="doc-meta"><span class="doc-type-badge dtype-script">スクリプト</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('028796a78715','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('028796a78715','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('028796a78715','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('028796a78715','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="script" data-doc-id="90c840bac2e1"><div class="doc-icon">🐍</div><div class="doc-info"><div class="doc-title">create_lstep</div><div class="doc-meta"><span class="doc-type-badge dtype-script">Lステップ</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('90c840bac2e1','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('90c840bac2e1','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('90c840bac2e1','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('90c840bac2e1','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="script" data-doc-id="1f81bd593bdc"><div class="doc-icon">🐍</div><div class="doc-info"><div class="doc-title">extract_docx</div><div class="doc-meta"><span class="doc-type-badge dtype-script">スクリプト</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('1f81bd593bdc','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('1f81bd593bdc','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('1f81bd593bdc','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('1f81bd593bdc','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="script" data-doc-id="57e0b9350148"><div class="doc-icon">📜</div><div class="doc-info"><div class="doc-title">quiz_100</div><div class="doc-meta"><span class="doc-type-badge dtype-script">JavaScript</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('57e0b9350148','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('57e0b9350148','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('57e0b9350148','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('57e0b9350148','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="script" data-doc-id="59a495c8378f"><div class="doc-icon">🐍</div><div class="doc-info"><div class="doc-title">scraper</div><div class="doc-meta"><span class="doc-type-badge dtype-script">スクレイパー</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('59a495c8378f','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('59a495c8378f','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('59a495c8378f','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('59a495c8378f','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="script" data-doc-id="00a342c9078b"><div class="doc-icon">🐍</div><div class="doc-info"><div class="doc-title">scraper_googlemap</div><div class="doc-meta"><span class="doc-type-badge dtype-script">スクレイパー</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('00a342c9078b','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('00a342c9078b','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('00a342c9078b','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('00a342c9078b','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="script" data-doc-id="35cb9de609ad"><div class="doc-icon">🐍</div><div class="doc-info"><div class="doc-title">scraper_itown</div><div class="doc-meta"><span class="doc-type-badge dtype-script">スクレイパー</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('35cb9de609ad','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('35cb9de609ad','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('35cb9de609ad','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('35cb9de609ad','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="script" data-doc-id="8a718744807d"><div class="doc-icon">🐍</div><div class="doc-info"><div class="doc-title">scraper_navitime</div><div class="doc-meta"><span class="doc-type-badge dtype-script">スクレイパー</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('8a718744807d','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('8a718744807d','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('8a718744807d','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('8a718744807d','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="script" data-doc-id="c70aec9371e4"><div class="doc-icon">🐍</div><div class="doc-info"><div class="doc-title">scraper_yahoo</div><div class="doc-meta"><span class="doc-type-badge dtype-script">スクレイパー</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('c70aec9371e4','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('c70aec9371e4','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('c70aec9371e4','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('c70aec9371e4','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="script" data-doc-id="273ccf34e95c"><div class="doc-icon">🐍</div><div class="doc-info"><div class="doc-title">update_quiz_100</div><div class="doc-meta"><span class="doc-type-badge dtype-script">クイズ</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('273ccf34e95c','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('273ccf34e95c','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('273ccf34e95c','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('273ccf34e95c','done',this)">実施済み</button></div></div></div>
+    <div class="doc-card" data-dtype="script" data-doc-id="5b400c06ca4c"><div class="doc-icon">📜</div><div class="doc-info"><div class="doc-title">在庫管理_発注管理シート追加コード</div><div class="doc-meta"><span class="doc-type-badge dtype-script">JavaScript</span><span>ルート</span></div><div class="triage-btns"><button class="triage-btn" data-val="need" onclick="setTriage('5b400c06ca4c','need',this)">必要</button><button class="triage-btn" data-val="hold" onclick="setTriage('5b400c06ca4c','hold',this)">保留</button><button class="triage-btn" data-val="skip" onclick="setTriage('5b400c06ca4c','skip',this)">不要</button><button class="triage-btn" data-val="done" onclick="setTriage('5b400c06ca4c','done',this)">実施済み</button></div></div></div>
+  </div>
+</div>
+</div>
+</div>
+
+<script>
+const DOCS_DATA = [{"id": "b47cd299bfb0", "title": "Instagram投稿ツール", "filename": "Instagram投稿ツール.html", "rel_path": "Instagram投稿ツール.html", "category": "tool", "doc_type": "Instagram", "icon": "📷", "badge_class": "dtype-tool", "location": "ルート"}, {"id": "bdee518623e0", "title": "Lステップ_自動応答_スタディGO版", "filename": "Lステップ_自動応答_スタディGO版.xlsx", "rel_path": "Lステップ_自動応答_スタディGO版.xlsx", "category": "data", "doc_type": "データ", "icon": "📊", "badge_class": "dtype-data", "location": "ルート"}, {"id": "21c3c03992e8", "title": "StudyGO_XBot", "filename": "StudyGO_XBot.gs", "rel_path": "StudyGO_XBot.gs", "category": "gas", "doc_type": "X Bot", "icon": "⚙", "badge_class": "dtype-gas", "location": "ルート"}, {"id": "5a6f355ffa3f", "title": "StudyGO_XBot_API取得ガイド", "filename": "StudyGO_XBot_API取得ガイド.txt", "rel_path": "StudyGO_XBot_API取得ガイド.txt", "category": "guide", "doc_type": "API取得ガイド", "icon": "📗", "badge_class": "dtype-guide", "location": "ルート"}, {"id": "44263cf0f38f", "title": "StudyGO_XBot_セットアップガイド", "filename": "StudyGO_XBot_セットアップガイド.txt", "rel_path": "StudyGO_XBot_セットアップガイド.txt", "category": "guide", "doc_type": "セットアップガイド", "icon": "📗", "badge_class": "dtype-guide", "location": "ルート"}, {"id": "2e9b23771618", "title": "StudyGO_XBot_運用マニュアル", "filename": "StudyGO_XBot_運用マニュアル.txt", "rel_path": "StudyGO_XBot_運用マニュアル.txt", "category": "guide", "doc_type": "運用マニュアル", "icon": "📗", "badge_class": "dtype-guide", "location": "ルート"}, {"id": "4e18d57e75a3", "title": "X投稿_あるある共感系", "filename": "X投稿_あるある共感系.txt", "rel_path": "X投稿_あるある共感系.txt", "category": "x-content", "doc_type": "X投稿コンテンツ", "icon": "🐦", "badge_class": "dtype-x", "location": "ルート"}, {"id": "84cfe7e07ad6", "title": "X投稿_アイドル曲", "filename": "X投稿_アイドル曲.txt", "rel_path": "X投稿_アイドル曲.txt", "category": "x-content", "doc_type": "X投稿コンテンツ", "icon": "🐦", "badge_class": "dtype-x", "location": "ルート"}, {"id": "95759ee0d4d3", "title": "X投稿_グッズコンビニ系", "filename": "X投稿_グッズコンビニ系.txt", "rel_path": "X投稿_グッズコンビニ系.txt", "category": "x-content", "doc_type": "X投稿コンテンツ", "icon": "🐦", "badge_class": "dtype-x", "location": "ルート"}, {"id": "fe9baec13886", "title": "X投稿_コンテンツ変換", "filename": "X投稿_コンテンツ変換.py", "rel_path": "X投稿_コンテンツ変換.py", "category": "script", "doc_type": "変換ツール", "icon": "🐍", "badge_class": "dtype-script", "location": "ルート"}, {"id": "463470bbfb74", "title": "X投稿_サブコンテンツ", "filename": "X投稿_サブコンテンツ.txt", "rel_path": "X投稿_サブコンテンツ.txt", "category": "x-content", "doc_type": "X投稿コンテンツ", "icon": "🐦", "badge_class": "dtype-x", "location": "ルート"}, {"id": "c2019e638f95", "title": "X投稿_企画シリーズ", "filename": "X投稿_企画シリーズ.txt", "rel_path": "X投稿_企画シリーズ.txt", "category": "x-content", "doc_type": "企画シリーズ", "icon": "🐦", "badge_class": "dtype-x", "location": "ルート"}, {"id": "24661f2afe6e", "title": "X投稿_体験レポート", "filename": "X投稿_体験レポート.txt", "rel_path": "X投稿_体験レポート.txt", "category": "x-content", "doc_type": "X投稿コンテンツ", "icon": "🐦", "badge_class": "dtype-x", "location": "ルート"}, {"id": "7f0f4ace1147", "title": "X投稿_勉強あるある", "filename": "X投稿_勉強あるある.txt", "rel_path": "X投稿_勉強あるある.txt", "category": "x-content", "doc_type": "X投稿コンテンツ", "icon": "🐦", "badge_class": "dtype-x", "location": "ルート"}, {"id": "df3035870d35", "title": "X投稿_勉強おすすめ曲", "filename": "X投稿_勉強おすすめ曲.txt", "rel_path": "X投稿_勉強おすすめ曲.txt", "category": "x-content", "doc_type": "X投稿コンテンツ", "icon": "🐦", "badge_class": "dtype-x", "location": "ルート"}, {"id": "bcbc48a9cf5f", "title": "X投稿_名言有名人おもしろ資格", "filename": "X投稿_名言有名人おもしろ資格.txt", "rel_path": "X投稿_名言有名人おもしろ資格.txt", "category": "x-content", "doc_type": "X投稿コンテンツ", "icon": "🐦", "badge_class": "dtype-x", "location": "ルート"}, {"id": "a3ca1943ef93", "title": "X投稿_店舗紹介", "filename": "X投稿_店舗紹介.txt", "rel_path": "X投稿_店舗紹介.txt", "category": "x-content", "doc_type": "店舗紹介投稿", "icon": "🐦", "badge_class": "dtype-x", "location": "ルート"}, {"id": "e72fa214b58e", "title": "X投稿_手動管理", "filename": "X投稿_手動管理.gs", "rel_path": "X投稿_手動管理.gs", "category": "gas", "doc_type": "X Bot", "icon": "⚙", "badge_class": "dtype-gas", "location": "ルート"}, {"id": "9b036d378cb8", "title": "X投稿_海外勉強トレンド", "filename": "X投稿_海外勉強トレンド.txt", "rel_path": "X投稿_海外勉強トレンド.txt", "category": "x-content", "doc_type": "X投稿コンテンツ", "icon": "🐦", "badge_class": "dtype-x", "location": "ルート"}, {"id": "826c8e34859b", "title": "X投稿_習慣ルーティン系", "filename": "X投稿_習慣ルーティン系.txt", "rel_path": "X投稿_習慣ルーティン系.txt", "category": "x-content", "doc_type": "X投稿コンテンツ", "icon": "🐦", "badge_class": "dtype-x", "location": "ルート"}, {"id": "88051552c5cc", "title": "X投稿_記事紹介テンプレート", "filename": "X投稿_記事紹介テンプレート.txt", "rel_path": "X投稿_記事紹介テンプレート.txt", "category": "x-content", "doc_type": "X投稿コンテンツ", "icon": "🐦", "badge_class": "dtype-x", "location": "ルート"}, {"id": "b70c20f0da1e", "title": "X投稿_試験日日報", "filename": "X投稿_試験日日報.txt", "rel_path": "X投稿_試験日日報.txt", "category": "x-content", "doc_type": "X投稿コンテンツ", "icon": "🐦", "badge_class": "dtype-x", "location": "ルート"}, {"id": "8db8e299ad2b", "title": "X投稿_雑学知識場所系", "filename": "X投稿_雑学知識場所系.txt", "rel_path": "X投稿_雑学知識場所系.txt", "category": "x-content", "doc_type": "X投稿コンテンツ", "icon": "🐦", "badge_class": "dtype-x", "location": "ルート"}, {"id": "cb5b72da0b1b", "title": "X投稿スケジュール_全シリーズ", "filename": "X投稿スケジュール_全シリーズ.txt", "rel_path": "X投稿スケジュール_全シリーズ.txt", "category": "x-content", "doc_type": "X運用管理", "icon": "🐦", "badge_class": "dtype-x", "location": "ルート"}, {"id": "194fa3f28d92", "title": "X運用_手動投稿スケジュール", "filename": "X運用_手動投稿スケジュール.txt", "rel_path": "X運用_手動投稿スケジュール.txt", "category": "x-content", "doc_type": "X運用管理", "icon": "🐦", "badge_class": "dtype-x", "location": "ルート"}, {"id": "9416d2d03772", "title": "X運用戦略", "filename": "X運用戦略.txt", "rel_path": "X運用戦略.txt", "category": "x-content", "doc_type": "X運用管理", "icon": "🐦", "badge_class": "dtype-x", "location": "ルート"}, {"id": "028796a78715", "title": "cleanup_data", "filename": "cleanup_data.py", "rel_path": "cleanup_data.py", "category": "script", "doc_type": "スクリプト", "icon": "🐍", "badge_class": "dtype-script", "location": "ルート"}, {"id": "90c840bac2e1", "title": "create_lstep", "filename": "create_lstep.py", "rel_path": "create_lstep.py", "category": "script", "doc_type": "Lステップ", "icon": "🐍", "badge_class": "dtype-script", "location": "ルート"}, {"id": "1f81bd593bdc", "title": "extract_docx", "filename": "extract_docx.py", "rel_path": "extract_docx.py", "category": "script", "doc_type": "スクリプト", "icon": "🐍", "badge_class": "dtype-script", "location": "ルート"}, {"id": "eacf331f0ffc", "title": "index", "filename": "index.html", "rel_path": "index.html", "category": "tool", "doc_type": "HTMLツール", "icon": "🌐", "badge_class": "dtype-tool", "location": "ルート"}, {"id": "61dcf3266818", "title": "list_export_20260316115919_1", "filename": "list_export_20260316115919_1.csv", "rel_path": "list_export_20260316115919_1.csv", "category": "data", "doc_type": "データ", "icon": "📊", "badge_class": "dtype-data", "location": "ルート"}, {"id": "57e0b9350148", "title": "quiz_100", "filename": "quiz_100.js", "rel_path": "quiz_100.js", "category": "script", "doc_type": "JavaScript", "icon": "📜", "badge_class": "dtype-script", "location": "ルート"}, {"id": "59a495c8378f", "title": "scraper", "filename": "scraper.py", "rel_path": "scraper.py", "category": "script", "doc_type": "スクレイパー", "icon": "🐍", "badge_class": "dtype-script", "location": "ルート"}, {"id": "00a342c9078b", "title": "scraper_googlemap", "filename": "scraper_googlemap.py", "rel_path": "scraper_googlemap.py", "category": "script", "doc_type": "スクレイパー", "icon": "🐍", "badge_class": "dtype-script", "location": "ルート"}, {"id": "35cb9de609ad", "title": "scraper_itown", "filename": "scraper_itown.py", "rel_path": "scraper_itown.py", "category": "script", "doc_type": "スクレイパー", "icon": "🐍", "badge_class": "dtype-script", "location": "ルート"}, {"id": "8a718744807d", "title": "scraper_navitime", "filename": "scraper_navitime.py", "rel_path": "scraper_navitime.py", "category": "script", "doc_type": "スクレイパー", "icon": "🐍", "badge_class": "dtype-script", "location": "ルート"}, {"id": "c70aec9371e4", "title": "scraper_yahoo", "filename": "scraper_yahoo.py", "rel_path": "scraper_yahoo.py", "category": "script", "doc_type": "スクレイパー", "icon": "🐍", "badge_class": "dtype-script", "location": "ルート"}, {"id": "273ccf34e95c", "title": "update_quiz_100", "filename": "update_quiz_100.py", "rel_path": "update_quiz_100.py", "category": "script", "doc_type": "クイズ", "icon": "🐍", "badge_class": "dtype-script", "location": "ルート"}, {"id": "07cffc1a534c", "title": "お知らせ管理システム", "filename": "お知らせ管理システム.gs", "rel_path": "お知らせ管理システム.gs", "category": "gas", "doc_type": "お知らせ", "icon": "⚙", "badge_class": "dtype-gas", "location": "ルート"}, {"id": "c3a829961ee8", "title": "クイズ管理システム", "filename": "クイズ管理システム.gs", "rel_path": "クイズ管理システム.gs", "category": "gas", "doc_type": "クイズ", "icon": "⚙", "badge_class": "dtype-gas", "location": "ルート"}, {"id": "6033a56dd49f", "title": "クイズ管理システム_セットアップガイド", "filename": "クイズ管理システム_セットアップガイド.txt", "rel_path": "クイズ管理システム_セットアップガイド.txt", "category": "guide", "doc_type": "セットアップガイド", "icon": "📗", "badge_class": "dtype-guide", "location": "ルート"}, {"id": "d241845001c3", "title": "スタジオマップ", "filename": "スタジオマップ.html", "rel_path": "スタジオマップ.html", "category": "tool", "doc_type": "レイアウトツール", "icon": "🗺", "badge_class": "dtype-tool", "location": "ルート"}, {"id": "42db5a1ac446", "title": "スタディGO_店舗向けマニュアル_QA", "filename": "スタディGO_店舗向けマニュアル_QA.csv", "rel_path": "スタディGO_店舗向けマニュアル_QA.csv", "category": "data", "doc_type": "データ", "icon": "📊", "badge_class": "dtype-data", "location": "ルート"}, {"id": "8699340b908e", "title": "スタディGO_店舗向けマニュアル_初期", "filename": "スタディGO_店舗向けマニュアル_初期.csv", "rel_path": "スタディGO_店舗向けマニュアル_初期.csv", "category": "data", "doc_type": "データ", "icon": "📊", "badge_class": "dtype-data", "location": "ルート"}, {"id": "6678dba77937", "title": "スタディGO_店舗検索サイト", "filename": "スタディGO_店舗検索サイト.html", "rel_path": "スタディGO_店舗検索サイト.html", "category": "tool", "doc_type": "店舗検索サイト", "icon": "🔍", "badge_class": "dtype-tool", "location": "ルート"}, {"id": "5505b8f8a8b7", "title": "スタディGO_店舗検索サイト_PatternA", "filename": "スタディGO_店舗検索サイト_PatternA.html", "rel_path": "スタディGO_店舗検索サイト_PatternA.html", "category": "tool", "doc_type": "店舗検索サイト", "icon": "🔍", "badge_class": "dtype-tool", "location": "ルート"}, {"id": "07d7c3d79082", "title": "スタディGO_店舗検索サイト_PatternB", "filename": "スタディGO_店舗検索サイト_PatternB.html", "rel_path": "スタディGO_店舗検索サイト_PatternB.html", "category": "tool", "doc_type": "店舗検索サイト", "icon": "🔍", "badge_class": "dtype-tool", "location": "ルート"}, {"id": "a1a33f7ff5dc", "title": "マーケティング戦略分析", "filename": "マーケティング戦略分析.html", "rel_path": "マーケティング戦略分析.html", "category": "data", "doc_type": "マーケティング分析", "icon": "📊", "badge_class": "dtype-data", "location": "ルート"}, {"id": "f316e18d885a", "title": "マーケティング調査レポート", "filename": "マーケティング調査レポート.html", "rel_path": "マーケティング調査レポート.html", "category": "data", "doc_type": "マーケティング分析", "icon": "📊", "badge_class": "dtype-data", "location": "ルート"}, {"id": "9c5a08c83d2d", "title": "メールテンプレート編集", "filename": "メールテンプレート編集.html", "rel_path": "メールテンプレート編集.html", "category": "tool", "doc_type": "メールツール", "icon": "✉", "badge_class": "dtype-tool", "location": "ルート"}, {"id": "e9b333adb5c3", "title": "メール一括送信システム", "filename": "メール一括送信システム.gs", "rel_path": "メール一括送信システム.gs", "category": "gas", "doc_type": "メール系", "icon": "⚙", "badge_class": "dtype-gas", "location": "ルート"}, {"id": "abd2138ecd9e", "title": "メール一括送信システム_セットアップガイド", "filename": "メール一括送信システム_セットアップガイド.txt", "rel_path": "メール一括送信システム_セットアップガイド.txt", "category": "guide", "doc_type": "セットアップガイド", "icon": "📗", "badge_class": "dtype-guide", "location": "ルート"}, {"id": "b5d90fb0c7fd", "title": "メール一括送信システム_運用マニュアル", "filename": "メール一括送信システム_運用マニュアル.txt", "rel_path": "メール一括送信システム_運用マニュアル.txt", "category": "guide", "doc_type": "運用マニュアル", "icon": "📗", "badge_class": "dtype-guide", "location": "ルート"}, {"id": "93da30976a59", "title": "ロッカー契約解約の流れ", "filename": "ロッカー契約解約の流れ.html", "rel_path": "ロッカー契約解約の流れ.html", "category": "tool", "doc_type": "ロッカー管理", "icon": "🔐", "badge_class": "dtype-tool", "location": "ルート"}, {"id": "0bbca1aeefbc", "title": "ロッカー空き確認表", "filename": "ロッカー空き確認表.gs", "rel_path": "ロッカー空き確認表.gs", "category": "gas", "doc_type": "ロッカー管理", "icon": "⚙", "badge_class": "dtype-gas", "location": "ルート"}, {"id": "dbaf0bb3be2a", "title": "ロッカー空き確認表_セットアップガイド", "filename": "ロッカー空き確認表_セットアップガイド.txt", "rel_path": "ロッカー空き確認表_セットアップガイド.txt", "category": "guide", "doc_type": "セットアップガイド", "icon": "📗", "badge_class": "dtype-guide", "location": "ルート"}, {"id": "8b22f3471b48", "title": "ロッカー管理表", "filename": "ロッカー管理表.html", "rel_path": "ロッカー管理表.html", "category": "tool", "doc_type": "ロッカー管理", "icon": "🔐", "badge_class": "dtype-tool", "location": "ルート"}, {"id": "1d3b30b06afb", "title": "会員識別システム提案書", "filename": "会員識別システム提案書.html", "rel_path": "会員識別システム提案書.html", "category": "plan", "doc_type": "提案書", "icon": "📝", "badge_class": "dtype-plan", "location": "ルート"}, {"id": "f092e2baa1b1", "title": "備品マスタ一覧", "filename": "備品マスタ一覧.xlsx", "rel_path": "備品マスタ一覧.xlsx", "category": "data", "doc_type": "備品データ", "icon": "📊", "badge_class": "dtype-data", "location": "ルート"}, {"id": "27ae401ba463", "title": "備品マスタ一覧_スタジオ別", "filename": "備品マスタ一覧_スタジオ別.xlsx", "rel_path": "備品マスタ一覧_スタジオ別.xlsx", "category": "data", "doc_type": "備品データ", "icon": "📊", "badge_class": "dtype-data", "location": "ルート"}, {"id": "392862f07c72", "title": "入会チェックリスト_スタディGO", "filename": "入会チェックリスト_スタディGO.csv", "rel_path": "入会チェックリスト_スタディGO.csv", "category": "data", "doc_type": "チェックリスト", "icon": "📊", "badge_class": "dtype-data", "location": "ルート"}, {"id": "9aab9731c54a", "title": "加盟法人自動登録", "filename": "加盟法人自動登録.gs", "rel_path": "加盟法人自動登録.gs", "category": "gas", "doc_type": "法人管理", "icon": "⚙", "badge_class": "dtype-gas", "location": "ルート"}, {"id": "a0cf7d775da3", "title": "加盟法人自動登録_セットアップガイド", "filename": "加盟法人自動登録_セットアップガイド.txt", "rel_path": "加盟法人自動登録_セットアップガイド.txt", "category": "guide", "doc_type": "セットアップガイド", "icon": "📗", "badge_class": "dtype-guide", "location": "ルート"}, {"id": "20ac9ca695f9", "title": "周知管理システム", "filename": "周知管理システム.gs", "rel_path": "周知管理システム.gs", "category": "gas", "doc_type": "お知らせ", "icon": "⚙", "badge_class": "dtype-gas", "location": "ルート"}, {"id": "59d96c27de66", "title": "周知管理システム_セットアップガイド", "filename": "周知管理システム_セットアップガイド.txt", "rel_path": "周知管理システム_セットアップガイド.txt", "category": "guide", "doc_type": "セットアップガイド", "icon": "📗", "badge_class": "dtype-guide", "location": "ルート"}, {"id": "96883c2aafb5", "title": "営業管理_バックエンド", "filename": "営業管理_バックエンド.gs", "rel_path": "営業管理_バックエンド.gs", "category": "gas", "doc_type": "営業管理", "icon": "⚙", "badge_class": "dtype-gas", "location": "ルート"}, {"id": "a1a8a9a5a746", "title": "営業管理_フロントエンド", "filename": "営業管理_フロントエンド.gs", "rel_path": "営業管理_フロントエンド.gs", "category": "gas", "doc_type": "営業管理", "icon": "⚙", "badge_class": "dtype-gas", "location": "ルート"}, {"id": "e3416b68c7d2", "title": "営業管理_メイン", "filename": "営業管理_メイン.gs", "rel_path": "営業管理_メイン.gs", "category": "gas", "doc_type": "営業管理", "icon": "⚙", "badge_class": "dtype-gas", "location": "ルート"}, {"id": "0b7c16f1e4fc", "title": "営業管理_設定", "filename": "営業管理_設定.gs", "rel_path": "営業管理_設定.gs", "category": "gas", "doc_type": "営業管理", "icon": "⚙", "badge_class": "dtype-gas", "location": "ルート"}, {"id": "7af0f3e3d9a7", "title": "営業管理システム", "filename": "営業管理システム.gs", "rel_path": "営業管理システム.gs", "category": "gas", "doc_type": "営業管理", "icon": "⚙", "badge_class": "dtype-gas", "location": "ルート"}, {"id": "288267c100e8", "title": "営業管理システム_セットアップガイド", "filename": "営業管理システム_セットアップガイド.txt", "rel_path": "営業管理システム_セットアップガイド.txt", "category": "guide", "doc_type": "セットアップガイド", "icon": "📗", "badge_class": "dtype-guide", "location": "ルート"}, {"id": "81da64f4fbc5", "title": "営業管理システム_運用マニュアル", "filename": "営業管理システム_運用マニュアル.txt", "rel_path": "営業管理システム_運用マニュアル.txt", "category": "guide", "doc_type": "運用マニュアル", "icon": "📗", "badge_class": "dtype-guide", "location": "ルート"}, {"id": "5b400c06ca4c", "title": "在庫管理_発注管理シート追加コード", "filename": "在庫管理_発注管理シート追加コード.js", "rel_path": "在庫管理_発注管理シート追加コード.js", "category": "script", "doc_type": "JavaScript", "icon": "📜", "badge_class": "dtype-script", "location": "ルート"}, {"id": "12657ff09656", "title": "契約通知メール転送", "filename": "契約通知メール転送.gs", "rel_path": "契約通知メール転送.gs", "category": "gas", "doc_type": "メール系", "icon": "⚙", "badge_class": "dtype-gas", "location": "ルート"}, {"id": "7ace77a683df", "title": "手続きフロー一覧", "filename": "手続きフロー一覧.html", "rel_path": "手続きフロー一覧.html", "category": "tool", "doc_type": "手続きフロー", "icon": "📋", "badge_class": "dtype-tool", "location": "ルート"}, {"id": "9989f7c01091", "title": "手続きフロー一覧", "filename": "手続きフロー一覧.pdf", "rel_path": "手続きフロー一覧.pdf", "category": "tool", "doc_type": "手続きフロー", "icon": "📋", "badge_class": "dtype-tool", "location": "ルート"}, {"id": "5ab7adbe96ca", "title": "月額自動入力", "filename": "月額自動入力.gs", "rel_path": "月額自動入力.gs", "category": "gas", "doc_type": "月額管理", "icon": "⚙", "badge_class": "dtype-gas", "location": "ルート"}, {"id": "bb0d9d8f2d87", "title": "有料自習室_営業リスト_1都3県", "filename": "有料自習室_営業リスト_1都3県.csv", "rel_path": "有料自習室_営業リスト_1都3県.csv", "category": "sales", "doc_type": "営業リスト", "icon": "📞", "badge_class": "dtype-sales", "location": "ルート"}, {"id": "d3c3ad6cd569", "title": "有料自習室_営業リスト_1都3県", "filename": "有料自習室_営業リスト_1都3県.txt", "rel_path": "有料自習室_営業リスト_1都3県.txt", "category": "sales", "doc_type": "営業リスト", "icon": "📞", "badge_class": "dtype-sales", "location": "ルート"}, {"id": "8d4062868ee0", "title": "架電リスト_1都3県_コワーキング自習室_統合版", "filename": "架電リスト_1都3県_コワーキング自習室_統合版.csv", "rel_path": "架電リスト_1都3県_コワーキング自習室_統合版.csv", "category": "sales", "doc_type": "営業リスト", "icon": "📞", "badge_class": "dtype-sales", "location": "ルート"}, {"id": "4bc0e90c7785", "title": "架電リスト_1都3県_独立系_コワーキング自習室", "filename": "架電リスト_1都3県_独立系_コワーキング自習室.csv", "rel_path": "架電リスト_1都3県_独立系_コワーキング自習室.csv", "category": "sales", "doc_type": "営業リスト", "icon": "📞", "badge_class": "dtype-sales", "location": "ルート"}, {"id": "a8a6b8276942", "title": "架電リスト_コワーキング自習室", "filename": "架電リスト_コワーキング自習室.csv", "rel_path": "架電リスト_コワーキング自習室.csv", "category": "sales", "doc_type": "営業リスト", "icon": "📞", "badge_class": "dtype-sales", "location": "ルート"}, {"id": "37064df7f282", "title": "架電リスト_東京_レンタルオフィス_コワーキング", "filename": "架電リスト_東京_レンタルオフィス_コワーキング.txt", "rel_path": "架電リスト_東京_レンタルオフィス_コワーキング.txt", "category": "sales", "doc_type": "営業リスト", "icon": "📞", "badge_class": "dtype-sales", "location": "ルート"}, {"id": "306fe4b9c756", "title": "架電リスト_関東_コワーキング自習室", "filename": "架電リスト_関東_コワーキング自習室.xlsx", "rel_path": "架電リスト_関東_コワーキング自習室.xlsx", "category": "sales", "doc_type": "営業リスト", "icon": "📞", "badge_class": "dtype-sales", "location": "ルート"}, {"id": "d1ff4e0101bb", "title": "身分証写真アップロード", "filename": "身分証写真アップロード.gs", "rel_path": "身分証写真アップロード.gs", "category": "gas", "doc_type": "身分証", "icon": "⚙", "badge_class": "dtype-gas", "location": "ルート"}, {"id": "c79753716ed4", "title": "身分証写真抽出", "filename": "身分証写真抽出.html", "rel_path": "身分証写真抽出.html", "category": "tool", "doc_type": "身分証ツール", "icon": "🪪", "badge_class": "dtype-tool", "location": "ルート"}];
+const FEATS_DATA = [{"id": "feat_e52d5f0530", "name": "Webマニュアル（勉強カフェ向け）"}, {"id": "feat_65b7e217df", "name": "メール一括送信システム"}, {"id": "feat_1a8f31030c", "name": "X Bot 自動投稿システム"}, {"id": "feat_23c2945016", "name": "営業管理WEBシステム"}, {"id": "feat_2dbef0d5ed", "name": "備品在庫管理システム"}, {"id": "feat_902f6e0bc9", "name": "ロッカー管理システム"}, {"id": "feat_736756535b", "name": "契約通知メール転送＋会員番号通知"}, {"id": "feat_36ea3a60f7", "name": "席配置プランナー"}, {"id": "feat_f0f80b72b7", "name": "手続きフロー一覧"}, {"id": "feat_43bab755ff", "name": "クイズ管理システム"}, {"id": "feat_a378ef74ad", "name": "お知らせ管理システム"}, {"id": "feat_26cdc041ea", "name": "X投稿コンテンツ（全シリーズ）"}, {"id": "feat_555c68f0f4", "name": "加盟法人自動登録"}, {"id": "feat_09382914f9", "name": "Lステップ自動応答"}, {"id": "feat_2ef93390e5", "name": "周知管理システム"}, {"id": "feat_74a246a309", "name": "Instagram投稿ツール"}, {"id": "feat_d9586240b7", "name": "身分証写真アップロード/抽出"}, {"id": "feat_d2c7759952", "name": "マーケティング戦略分析"}, {"id": "feat_11b5616b87", "name": "スタディGO 店舗検索サイト"}, {"id": "feat_1f4fa4e42f", "name": "会員識別システム提案書"}];
+
+// === Tab switching ===
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  event.target.closest('.main-tab').classList.add('active');
+}
+
+// === Triage state (shared localStorage) ===
+let triageState = {};
+try { triageState = JSON.parse(localStorage.getItem('studygo_eigyou_triage') || '{}'); } catch(e) {}
+
+function saveTriage() {
+  localStorage.setItem('studygo_eigyou_triage', JSON.stringify(triageState));
+  updateTriageCounts();
+  updateFeatTriageCounts();
+  applyDocFilters();
+  applyFeatTriageFilter();
+}
+
+// === Generic triage set ===
+function setTriageGeneric(id, val, btn) {
+  if (triageState[id] === val) {
+    delete triageState[id];
+    btn.classList.remove('sel-need','sel-skip','sel-hold','sel-done');
+  } else {
+    triageState[id] = val;
+    const row = btn.parentElement;
+    row.querySelectorAll('.triage-btn').forEach(b => b.classList.remove('sel-need','sel-skip','sel-hold','sel-done'));
+    btn.classList.add('sel-' + val);
+  }
+  saveTriage();
+}
+function setTriage(docId, val, btn) { setTriageGeneric(docId, val, btn); }
+function setFeatTriage(featId, val, btn) { setTriageGeneric(featId, val, btn); }
+
+// ====== FEATURE TAB ======
+
+let activeFeatStatus = 'all';
+function filterFeatures(status) {
+  activeFeatStatus = status;
+  document.querySelectorAll('#tab-features .filter-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  applyFeatTriageFilter();
+}
+
+let activeFeatTriage = 'all';
+function filterFeatTriage(val) {
+  activeFeatTriage = val;
+  document.querySelectorAll('#feat-triage-tabs .triage-tab').forEach(t => t.classList.remove('active'));
+  event.target.closest('.triage-tab').classList.add('active');
+  applyFeatTriageFilter();
+}
+
+function applyFeatTriageFilter() {
+  document.querySelectorAll('#tab-features .category').forEach(cat => {
+    let visCount = 0;
+    cat.querySelectorAll('.feature-card').forEach(card => {
+      const st = card.dataset.status;
+      const fid = card.dataset.featId;
+      const triage = triageState[fid] || 'unset';
+      let show = true;
+      if (activeFeatStatus !== 'all' && st !== activeFeatStatus) show = false;
+      if (activeFeatTriage !== 'all' && triage !== activeFeatTriage) show = false;
+      card.style.display = show ? '' : 'none';
+      if (show) visCount++;
+    });
+    cat.style.display = visCount > 0 ? '' : 'none';
+  });
+}
+
+function updateFeatTriageCounts() {
+  let counts = {all: FEATS_DATA.length, need:0, skip:0, hold:0, done:0, unset:0};
+  FEATS_DATA.forEach(f => {
+    const v = triageState[f.id];
+    if (v === 'need') counts.need++;
+    else if (v === 'skip') counts.skip++;
+    else if (v === 'hold') counts.hold++;
+    else if (v === 'done') counts.done++;
+    else counts.unset++;
+  });
+  for (const k of ['all','need','skip','hold','done','unset']) {
+    const el = document.getElementById('ftc-' + k);
+    if (el) el.textContent = counts[k];
+  }
+}
+
+// ====== DOC TAB ======
+
+function updateTriageCounts() {
+  let counts = {all: DOCS_DATA.length, need:0, skip:0, hold:0, done:0, unset:0};
+  DOCS_DATA.forEach(d => {
+    const v = triageState[d.id];
+    if (v === 'need') counts.need++;
+    else if (v === 'skip') counts.skip++;
+    else if (v === 'hold') counts.hold++;
+    else if (v === 'done') counts.done++;
+    else counts.unset++;
+  });
+  for (const k of ['all','need','skip','hold','done','unset']) {
+    const el = document.getElementById('tc-' + k);
+    if (el) el.textContent = counts[k];
+  }
+}
+
+let activeTriageFilter = 'all';
+function filterTriage(val) {
+  activeTriageFilter = val;
+  document.querySelectorAll('#tab-docs .triage-tabs .triage-tab').forEach(t => t.classList.remove('active'));
+  event.target.closest('.triage-tab').classList.add('active');
+  applyDocFilters();
+}
+
+let activeDocType = 'all';
+function filterDocType(dtype) {
+  activeDocType = dtype;
+  document.querySelectorAll('#tab-docs .filter-bar .filter-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  applyDocFilters();
+}
+
+function applyDocFilters() {
+  const q = (document.getElementById('docSearch')?.value || '').toLowerCase();
+  document.querySelectorAll('.doc-category-section').forEach(sec => {
+    if (activeDocType !== 'all' && sec.dataset.docCat !== activeDocType) {
+      sec.style.display = 'none'; return;
+    }
+    let visCount = 0;
+    sec.querySelectorAll('.doc-card').forEach(card => {
+      const title = card.querySelector('.doc-title').textContent.toLowerCase();
+      const dtype = card.dataset.dtype;
+      const docId = card.dataset.docId;
+      const triage = triageState[docId] || 'unset';
+      let show = true;
+      if (activeDocType !== 'all' && dtype !== activeDocType) show = false;
+      if (q && !title.includes(q)) show = false;
+      if (activeTriageFilter !== 'all' && triage !== activeTriageFilter) show = false;
+      card.style.display = show ? '' : 'none';
+      if (show) visCount++;
+    });
+    sec.style.display = visCount > 0 ? '' : 'none';
+  });
+}
+
+// === Init ===
+function initTriage() {
+  document.querySelectorAll('.doc-card').forEach(card => {
+    const docId = card.dataset.docId;
+    const val = triageState[docId];
+    if (val) {
+      const btn = card.querySelector(`.triage-btn[data-val="${val}"]`);
+      if (btn) btn.classList.add('sel-' + val);
+    }
+  });
+  document.querySelectorAll('.feature-card').forEach(card => {
+    const fid = card.dataset.featId;
+    if (!fid) return;
+    const val = triageState[fid];
+    if (val) {
+      const btn = card.querySelector(`.triage-btn[data-val="${val}"]`);
+      if (btn) btn.classList.add('sel-' + val);
+    }
+  });
+  updateTriageCounts();
+  updateFeatTriageCounts();
+}
+document.addEventListener('DOMContentLoaded', initTriage);
+</script>
+</body>
+</html>
